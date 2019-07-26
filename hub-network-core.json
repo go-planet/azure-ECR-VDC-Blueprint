@@ -1,0 +1,559 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "HubVNetName": {
+            "defaultValue": "vn-hub-core",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Hub Virtual Network"
+            }
+        },
+        "HubVNetPrefix": {
+            "defaultValue": "10.41.248.0/21",
+            "type": "String",
+            "metadata": {
+                "description": "This is the address space used to create the Hub VNET"
+            }
+        },
+        "GWSubnetName": {
+            "defaultValue": "GatewaySubnet",
+            "allowedValues": [
+                "GatewaySubnet"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription VNET Gateway Subnet must be GatewaySubnet"
+            }
+        },
+        "GWSubnetPrefix": {
+            "defaultValue": "10.41.255.240/28",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription VNET Gateway Subnet"
+            }
+        },
+        "MgmtSubnetName": {
+            "defaultValue": "sn-hub-core-mgmt",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Management Subnet"
+            }
+        },
+        "MgmtSubnetPrefix": {
+            "defaultValue": "10.41.255.192/27",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Management Subnet"
+            }
+        },
+        "AddsSubnetName": {
+            "defaultValue": "sn-hub-core-adds",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Active Directory Domain Services Subnet"
+            }
+        },
+        "AddsSubnetPrefix": {
+            "defaultValue": "10.41.255.128/26",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Active Directory Domain Services Subnet"
+            }
+        },
+        "PubOutSubnetName": {
+            "defaultValue": "sn-hub-core-pubout",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Public Out Subnet"
+            }
+        },
+        "PubOutSubnetPrefix": {
+            "defaultValue": "10.41.255.96/27",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Public Out Subnet"
+            }
+        },
+        "PubInSubnetName": {
+            "defaultValue": "sn-hub-core-pubin",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Public in Subnet"
+            }
+        },
+        "PubInSubnetPrefix": {
+            "defaultValue": "10.41.255.64/27",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Public in Subnet"
+            }
+        },
+        "PriOutSubnetName": {
+            "defaultValue": "sn-hub-core-priout",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Private Out Subnet"
+            }
+        },
+        "PriOutSubnetPrefix": {
+            "defaultValue": "10.41.255.32/27",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Private Out Subnet"
+            }
+        },
+        "PriInSubnetName": {
+            "defaultValue": "sn-hub-core-priin",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Private in Subnet"
+            }
+        },
+        "PriInSubnetPrefix": {
+            "defaultValue": "10.41.255.0/27",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Private in Subnet"
+            }
+        },
+        "WebSubnetName": {
+            "defaultValue": "sn-hub-core-web",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Web Subnet"
+            }
+        },
+        "WebSubnetPrefix": {
+            "defaultValue": "10.41.253.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Web Subnet"
+            }
+        },
+        "AppSubnetName": {
+            "defaultValue": "sn-hub-core-app",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Web Subnet"
+            }
+        },
+        "AppSubnetPrefix": {
+            "defaultValue": "10.41.252.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Web Subnet"
+            }
+        },
+        "DataSubnetName": {
+            "defaultValue": "sn-hub-core-data",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Web Subnet"
+            }
+        },
+        "DataSubnetPrefix": {
+            "defaultValue": "10.41.251.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "Address space for the Hub Subscription Web Subnet"
+            }
+        },
+        "MgmtNsgName": {
+            "defaultValue": "nsg-hub-core-mgmt-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Management network security group"
+            }
+        },
+        "AddsNsgName": {
+            "defaultValue": "nsg-hub-core-adds-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Active Directory Domain Services network security group"
+            }
+        },
+        "PubOutNsgName": {
+            "defaultValue": "nsg-hub-core-pubout-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Public Out network security group"
+            }
+        },
+        "PubInNsgName": {
+            "defaultValue": "nsg-hub-core-pubin-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Public In network security group"
+            }
+        },
+        "PriOutNsgName": {
+            "defaultValue": "nsg-hub-core-priout-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Private Out network security group"
+            }
+        },
+        "PriInNsgName": {
+            "defaultValue": "nsg-hub-core-priin-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Private In network security group"
+            }
+        },
+        "WebNsgName": {
+            "defaultValue": "nsg-hub-core-web-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Web network security group"
+            }
+        },
+        "AppNsgName": {
+            "defaultValue": "nsg-hub-core-app-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription Application network security group"
+            }
+        },
+        "DataNsgName": {
+            "defaultValue": "nsg-hub-core-db-sn",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Hub Subscription hubuction network security group"
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('MgmtNSGName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('AddsNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('PubOutNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('PubInNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('PriOutNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('PriInNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('WebNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('AppNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('DataNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2015-06-15",
+            "name": "[parameters('HubVNetName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('AddsNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('PubOutNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('PubInNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('PriOutNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('PriInNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('DataNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('WebNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('AppNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('MgmtNsgName'))]"
+            ],
+            "tags": {},
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('HubVNetPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('GWSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('GWSubnetPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('AddsSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('AddsSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('AddsNsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('PubOutSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('PubOutSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('PubOutNsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('PubInSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('PubInSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('PubInNsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('PriOutSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('PriOutSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('PriOutNsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('PriInSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('PriInSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('PriInNsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('DataSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('DataSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('DataNsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('AppSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('AppSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('AppNSGName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('WebSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('WebSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('WebNSGName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('MgmtSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('MgmtSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('MgmtNsgName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

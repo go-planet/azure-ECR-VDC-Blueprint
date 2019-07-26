@@ -1,0 +1,418 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "SpokeVNetName": {
+            "defaultValue": "vn-prod-core",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Spoke Virtual Network"
+            }
+        },
+        "SpokeVNetPrefix": {
+            "defaultValue": "10.41.232.0/21",
+            "type": "string",
+            "metadata": {
+                "description": "This is the address space used to create the Spoke VNET"
+            }
+        },
+        "GWSubnetName": {
+            "defaultValue": "GatewaySubnet",
+            "allowedValues": [
+                "GatewaySubnet"
+            ],
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Spoke Subscription VNET Gateway Subnet must be GatewaySubnet"
+            }
+        },
+        "GWSubnetPrefix": {
+            "defaultValue": "10.41.239.240/28",
+            "type": "string",
+            "metadata": {
+                "description": "Address space for the Spoke Subscription VNET Gateway Subnet"
+            }
+        },
+        "AgSubnetName": {
+            "defaultValue": "sn-prod-core-ag",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Spoke Subscription Application Gateway Subnet"
+            }
+        },
+        "AgSubnetPrefix": {
+            "defaultValue": "10.41.239.128/26",
+            "type": "string",
+            "metadata": {
+                "description": "Address space for the Spoke Subscription Application Gateway Subnet"
+            }
+        },
+        "MgmtSubnetName": {
+            "defaultValue": "sn-prod-core-mgmt",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Spoke Subscription Management Subnet"
+            }
+        },
+        "MgmtSubnetPrefix": {
+            "defaultValue": "10.41.239.192/27",
+            "type": "string",
+            "metadata": {
+                "description": "Address space for the Spoke Subscription Management Subnet"
+            }
+        },
+        "WebSubnetName": {
+            "defaultValue": "sn-prod-core-web",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Spoke Subscription Web Subnet"
+            }
+        },
+        "WebSubnetPrefix": {
+            "defaultValue": "10.41.237.0/24",
+            "type": "string",
+            "metadata": {
+                "description": "Address space for the Spoke Subscription Web Subnet"
+            }
+        },
+        "AppSubnetName": {
+            "defaultValue": "sn-prod-core-app",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Spoke Subscription Web Subnet"
+            }
+        },
+        "AppSubnetPrefix": {
+            "defaultValue": "10.41.236.0/24",
+            "type": "string",
+            "metadata": {
+                "description": "Address space for the Spoke Subscription Web Subnet"
+            }
+        },
+        "DataSubnetName": {
+            "defaultValue": "sn-prod-core-data",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Spoke Subscription Web Subnet"
+            }
+        },
+        "DataSubnetPrefix": {
+            "defaultValue": "10.41.235.0/24",
+            "type": "string",
+            "metadata": {
+                "description": "Address space for the Spoke Subscription Web Subnet"
+            }
+        },
+        "MgmtNsgName": {
+            "defaultValue": "nsg-prod-core-mgmt-sn",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Hub Subscription Management network security group"
+            }
+        },
+        "AgNsgName": {
+            "defaultValue": "nsg-prod-core-ag-sn",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Hub Subscription App Gateway network security group"
+            }
+        },
+        "WebNsgName": {
+            "defaultValue": "nsg-prod-core-web-sn",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Hub Subscription Web network security group"
+            }
+        },
+        "AppNsgName": {
+            "defaultValue": "nsg-prod-core-app-sn",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Hub Subscription Application network security group"
+            }
+        },
+        "DataNsgName": {
+            "defaultValue": "nsg-prod-core-db-sn",
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Hub Subscription Production network security group"
+            }
+        },
+        "HubSubscriptionId": {
+            "type": "string",
+            "metadata": {
+                "description": "The hub subscription's unique Id (e.g.,3e6ccc80-f91f-42c8-b7f3-d9d4k3e81110) << fake subId"
+            }
+        },
+        "HubVnetResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "The resource group containing the Hub Vnet"
+            }
+        },
+        "HubVnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Hub subscription VNET"
+            }
+        }
+    },
+    "variables": {
+        "SpokePeerHubName": "[concat(parameters('SpokeVnetName'), '/' , parameters('SpokeVnetName'), '-peer-hub')]",
+        "HubPeerSpokeName": "[concat(parameters('HubVnetName'), '/' , parameters('HubVnetName'), '-peer-spoke')]",
+        "CurrentSubscription": "[subscription().subscriptionId]",
+        "CurrentResourceGroup": "[resourceGroup().name]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('MgmtNSGName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('AgNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('WebNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('AppNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('DataNsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Internet_Deny",
+                        "properties": {
+                            "description": "Blanket Deny for Internet Traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2015-06-15",
+            "name": "[parameters('SpokeVNetName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('AgNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('DataNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('WebNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('AppNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('MgmtNsgName'))]"
+            ],
+            "tags": {},
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('SpokeVNetPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('GWSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('GWSubnetPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('AGSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('AGSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('AGNSGName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('DataSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('DataSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('DataNsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('AppSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('AppSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('AppNSGName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('WebSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('WebSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('WebNSGName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('MgmtSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('MgmtSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('MgmtNsgName'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "resources": [
+                {
+                    "apiVersion": "2016-06-01",
+                    "type": "virtualNetworkPeerings",
+                    "name": "[variables('SpokePeerHubName')]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/virtualNetworks/', parameters('SpokeVNetName'))]"
+                    ],
+                    "comments": "This is the peering from Spoke to Hub vNet",
+                    "properties": {
+                        "allowVirtualNetworkAccess": "true",
+                        "allowForwardedTraffic": "false",
+                        "allowGatewayTransit": "false",
+                        "useRemoteGateways": "false",
+                        "remoteVirtualNetwork": {
+                            "id": "[resourceId(parameters('HubSubscriptionId'), parameters('HubVNetResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('HubvNetName'))]"
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2017-05-10",
+                    "name": "nestedTemplate",
+                    "type": "Microsoft.Resources/deployments",
+                    "resourceGroup": "[parameters('HubVnetResourceGroup')]",
+                    "subscriptionId": "[parameters('HubSubscriptionId')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/virtualNetworks/', parameters('SpokeVnetName'))]"
+                    ],
+                    "properties": {
+                        "mode": "Incremental",
+                        "template": {
+                            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+                            "contentVersion": "1.0.0.0",
+                            "resources": [
+                                {
+                                    "apiVersion": "2016-06-01",
+                                    "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+                                    "name": "[concat(parameters('HubvNetName'),'/', variables('HubPeerSpokeName'))]",
+                                    "location": "[resourceGroup().location]",
+                                    "comments": "This is the peering from the Hub vNet to the Spoke vNet",
+                                    "properties": {
+                                        "allowVirtualNetworkAccess": "true",
+                                        "allowForwardedTraffic": "false",
+                                        "allowGatewayTransit": "false",
+                                        "useRemoteGateways": "false",
+                                        "remoteVirtualNetwork": {
+                                            "id": "[resourceId(variables('CurrentSubscription'), variables('CurrentResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('HubVnetName'))]"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

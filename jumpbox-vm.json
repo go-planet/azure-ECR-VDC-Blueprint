@@ -1,0 +1,157 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "vmName": {
+          "type": "string",
+          "metadata": {
+            "description": "Name for the Virtual Machine."
+          }
+      },
+      "vmSize": {
+        "defaultValue": "Standard_D1_V2",
+        "allowedValues": [
+          "Standard_D1_V2",
+          "Standard_D2_V2",
+          "Standard_D3_V2",
+          "Standard_D4_V2"
+        ],
+        "type": "string",
+        "metadata": {
+          "description": "Azure VM size for VM-Series"
+        }
+      },
+      "jumpboxAdminUsername": {
+        "type": "string",
+        "defaultValue": "jb-admin-user",
+        "metadata": {
+          "displayName": "Jumpbox admin username",
+          "description": "The username used to access jumpbox VMs"
+        }
+      },
+      "jumpboxAdminPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The Key Vault Resource ID and Key Vault Secret Name where the Jumpbox admin password is stored.",
+          "displayName": "Jumpbox admin password"
+        }
+      },
+      "windowsOSVersion": {
+        "type": "string",
+        "defaultValue": "2016-Datacenter",
+        "allowedValues": [
+          "2012-R2-Datacenter",
+          "2012-R2-Datacenter-smalldisk",
+          "2016-Datacenter-with-Containers",
+          "2016-Datacenter",
+          "2016-Datacenter-smalldisk",
+          "2019-Datacenter",
+          "2019-Datacenter-smalldisk"
+        ],
+        "metadata": {
+          "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+        }
+      },
+      "jumpboxVnet": {
+          "type": "string",
+          "defaultValue": "vn-hub-core",
+          "metadata": {
+            "description": "Vnet Reference to connect the VM to"
+          } 
+      },
+      "jumpboxSubnet": {
+        "type": "string",
+        "defaultValue": "sn-hub-core-mgmt",
+        "metadata": {
+          "description": "Subnet Reference to connect the VM to"
+        } 
+    }
+  
+    },
+    "variables": {
+      "nicName": "[concat(parameters('vmName'),'-nic')]",
+      "publicIPAddressName": "[concat(parameters('vmName'),'-pip')]",
+      "vmName": "[parameters('vmName')]",
+      "dnsLabelPrefix": "[toLower(parameters('vmName'))]",
+      "jumpboxSubnetRef": "[concat(resourceId('rg-hub-networking','Microsoft.Network/virtualNetworks',parameters('jumpboxVnet')),'/subnets/',parameters('jumpboxSubnet'))]"
+    },
+    "resources": [
+      {
+        "apiVersion": "2016-03-30",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('publicIPAddressName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic",
+          "dnsSettings": {
+            "domainNameLabel": "[variables('dnsLabelPrefix')]"
+          }
+        }
+      },
+      {
+        "apiVersion": "2016-03-30",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[variables('nicName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                },
+                "subnet": {
+                  "id": "[variables('jumpboxSubnetRef')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2017-03-30",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[variables('vmName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        ],
+        "properties": {
+          "licenseType": "Windows_Server",
+          "hardwareProfile": {
+            "vmSize": "[parameters('vmSize')]"
+          },
+          "osProfile": {
+            "computerName": "[variables('vmName')]",
+            "adminUsername": "[parameters('jumpboxAdminUsername')]",
+            "adminPassword": "[parameters('jumpboxAdminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServer",
+              "offer": "WindowsServer",
+              "sku": "[parameters('windowsOSVersion')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage"
+            }
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "outputs": {}
+  }
+  
